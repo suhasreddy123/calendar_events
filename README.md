@@ -11,8 +11,8 @@ Server runs on Apache
 
 Below softwares need to be installed to run the project
 
-```
 Apache Installation:
+```
 sudo apt-get update
 sudo apt-get install apache2
 ```
