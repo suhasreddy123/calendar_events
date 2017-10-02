@@ -11,6 +11,12 @@ Server runs on Apache
 
 Below softwares need to be installed to run the project
 
+Download JS lib files:
+```
+Angular Router - https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/1.0.3/angular-ui-router.js
+Angularjs -  https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.js
+Moment js - http://momentjs.com/downloads/moment.js
+```
 Apache Installation:
 ```
 sudo apt-get update
