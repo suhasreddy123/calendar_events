@@ -10,7 +10,7 @@ app.config(function($stateProvider, $urlServiceProvider) {
     component: 'main',
     resolve: {
       date: function() {
-      	return "TEST";
+      	return "";
       }
     }
   });
@@ -27,31 +27,6 @@ app.config(function($stateProvider, $urlServiceProvider) {
   });
 
 });
-
-const eventCard = {
-	bindings: {
-		timeslots: '<'
-	},
-	template: `
-		<div ng-repeat="item in $ctrl.timeslots | orderBy:'timeslot'">
-			<event-time-slot timeslot="$ctrl.convertTo12HourFormat(item.timeslot)" date="item.date">
-  			</event-time-slot>
-  			<event-list events="item.events"><event-list/>
-		</div>
-		
-	`,
-	controller: class EventCardController {
-		constructor() {
-			
-		}
-		$onInit() {
-			
-		}
-		convertTo12HourFormat(time){
-			return moment(time, ["HH:mm:ss"]).format("hh:mm a");
-	    }
-	}
-};
 
 
 function EventService($http, $q) {  
@@ -115,11 +90,44 @@ function groupBy(xs, key) {
 	      then(
 	      	resp => { 
 	      		var data = resp.data; return prepareTimeSlots(data.data, date);
+	      	},
+	      	err =>{
+	      		if (err.status == 404){
+	      			console.log("NO DATA ------------");
+	      			return [];
+	      		}
 	      	}
 	      );
 	    }
 	}
 }
+
+
+const eventCard = {
+	bindings: {
+		timeslots: '<'
+	},
+	template: `
+		<div ng-if="$ctrl.timeslots.length ===0"> No Calendar Events!! </div>
+		<div ng-repeat="item in $ctrl.timeslots | orderBy:'timeslot'">
+			<event-time-slot timeslot="$ctrl.convertTo12HourFormat(item.timeslot)" date="item.date">
+  			</event-time-slot>
+  			<event-list events="item.events"><event-list/>
+		</div>
+		
+	`,
+	controller: class EventCardController {
+		constructor() {
+			
+		}
+		$onInit() {
+			
+		}
+		convertTo12HourFormat(time){
+			return moment(time, ["HH:mm:ss"]).format("hh:mm a");
+	    }
+	}
+};
 
 const main = {
   	template: ` 		
