@@ -1,5 +1,5 @@
 
-"use babel";
+
 let app = angular.module('app', ['ui.router']);
 app.config(function($stateProvider, $urlServiceProvider) {
  $urlServiceProvider.rules.otherwise({ state: 'tasks' });
