@@ -63,7 +63,7 @@ function EventService($http, $q) {
       	 o.events = grpItems[k];
       	 timeslots.push(o);
       }
-      console.log("TTTTTtTTTTTT" , timeslots);
+
       return timeslots;
 
 }
@@ -93,7 +93,6 @@ function groupBy(xs, key) {
 	      	},
 	      	err =>{
 	      		if (err.status == 404){
-	      			console.log("NO DATA ------------");
 	      			return [];
 	      		}
 	      	}
@@ -223,7 +222,7 @@ const eventList = {
 		events: '<'
 	},
 	template: `
-		<div class="client-schedule-card" ng-repeat="event in $ctrl.events | orderBy:'s_time'">
+		<div class="client-schedule-card" ng-repeat="event in $ctrl.events | orderBy:'e_time'">
 			<event event="event"></event>			
 		</div>
 	`,
