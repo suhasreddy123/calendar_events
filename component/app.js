@@ -1,6 +1,7 @@
 
 
-let app = angular.module('app', ['ui.router']);
+let app = angular.module('app', ['ui.router', 'ngMaterial', 'ngMessages']);
+
 app.config(function($stateProvider, $urlServiceProvider) {
  $urlServiceProvider.rules.otherwise({ state: 'tasks' });
   
@@ -9,136 +10,23 @@ app.config(function($stateProvider, $urlServiceProvider) {
     component: 'main',
     resolve: {
       date: function() {
-      	return "";
+      	return "TEST";
       }
     }
   });
     
-  $stateProvider.state('tasks.events', {
+  $stateProvider.state('tasks.eventCard', {
     url: '/:date',
-    component: 'events',
+    component: 'eventCard',
     resolve: {
-      events: function(EventService) {
-      	cnsole.log("test");
-        return EventService.getEvents();
-      }
+    	timeslots: function($transition$, EventService){
+    		const date = $transition$.params().date;
+    		return EventService.getEvents(date);
+    	}
   	}
   });
 
 });
-
-const main = {
-  	template: `
-  	<div class="customer-website-main-section">
-			<div class="customer-website-right tech-task">
-				<div class="client-schedule-card-list">
-					<div class="schedule-card-parent-wrapper">
-						<div>
-						  <events></events>
-						</div>
-					</div>
-					<div class="alt-padding client-website-header-bottom-wrapper"></div>
-				</div>
-			</div>
-		</div>`,
- 	controller: class MainController{
-	    constructor() {
-	    }
-	    $onInit() {
-	     
-	    }
-	    
-	}
-};
-
-const events = {
-  	template: `
-  	<div>
-  		<event-form
-			on-select="$ctrl.getTasks($event);">
-  		</event-form>
-  		<event-card timeslots="$ctrl.timeslots">
-  		</event-card>
-	</div>`,
- 	controller: class EventsController{
-	    constructor(EventService) {
-	      this.eventService = EventService;
-	    }
-	    $onInit() {
-	     this.getTasks({date:"01/08/2016"});
-		}
-	    getTasks({date}) {
-	    	this.prepareTimeSlots(mainData.data, date);
-	    }
-	    prepareTimeSlots(srcList, date) {
-	    	  var list = [], dest = [];
-	    	  list = list.concat(srcList.classes, srcList.events, srcList.facilities);
-	    	  for(var i=0; i<list.length; i++){
-		      	var src = list[i];
-		      	var o = {};
-		      	o.type = (src.class_name)?"Class":(src.facility_name?"Facility":"Event");
-		      	o.name = "" || src.class_name || src.name || src.facility_name || "";
-				o.s_time = src.starttime;
-				o.e_time = src.endtime;
-				o.state = (o.type==="Class") ? src.strength +"/"+src.available_spots : 
-				((o.type==="Facility") ? (src.notAvailable===0? 'Available' : 'NotAvailable') : src.staff.length + " trainers");
-
-				o.duration = this.getDuration(date + " "+o.s_time, date + " "+o.e_time);
-				o.price = src.price;
-				o.trainers = src.staff;
-				
-
-				dest.push(o);
-		      }
-		      var grpItems = this.groupBy(dest, "s_time");
-		     
-		      this.timeslots = [];
-		      for(var k in grpItems){
-		      	 var o = {};
-		      	 o.timeslot = k;
-		      	 o.events = grpItems[k];
-		      	 this.timeslots.push(o);
-		      }
-
-		      console.log(this.timeslots);
-		}
-	    getDuration(now, then){
-	    	var duration = moment.duration(moment(then).diff(moment(now)));
-		  	var hours = parseInt(duration.asHours());
-		  	var minutes = parseInt(duration.asMinutes())-hours*60;
-
-		  	var datestring = (hours>0? (hours + " hr") : "") + (minutes>0? (" "+minutes + " mins") : "");
-		  	console.log(datestring);
-		  	return datestring;
-
-	    }
-	    
-	    groupBy(xs, key) {
-		  return xs.reduce(function(rv, x) {
-		    (rv[x[key]] = rv[x[key]] || []).push(x);
-		    return rv;
-		  }, {});
-		}
-	}
-};
-
-const eventForm = {
-	bindings: {
-		onSelect: '&'
-	},
-	template: `
-		<div> </div>
-
-	`,
-	controller: class EventFormController {
-		constructor(){
-
-		}
-		$onInit(){
-
-		}
-	}
-};
 
 const eventCard = {
 	bindings: {
@@ -154,14 +42,138 @@ const eventCard = {
 	`,
 	controller: class EventCardController {
 		constructor() {
-
+			
 		}
 		$onInit() {
-			console.log(this.timeslots);
+			
 		}
 		convertTo12HourFormat(time){
 			return moment(time, ["HH:mm:ss"]).format("hh:mm a");
 	    }
+	}
+};
+
+
+function EventService($http, $q) {  
+  var date="";
+  function setDate(d){
+  	date=d;
+  }
+  function prepareTimeSlots(srcList, date) {
+	  var list = [], dest = [];
+	  list = list.concat(srcList.classes, srcList.events, srcList.facilities);
+	  for(var i=0; i<list.length; i++){
+      	var src = list[i];
+      	var o = {};
+      	o.type = (src.class_name)?"Class":(src.facility_name?"Facility":"Event");
+      	o.name = "" || src.class_name || src.name || src.facility_name || "";
+		o.s_time = src.starttime;
+		o.e_time = src.endtime;
+		o.state = (o.type==="Class") ? src.strength +"/"+src.available_spots : 
+		((o.type==="Facility") ? (src.notAvailable===0? 'Available' : 'NotAvailable') : src.staff.length + " trainers");
+
+		o.duration = getDuration(date + " "+o.s_time, date + " "+o.e_time);
+		o.price = src.price;
+		o.trainers = src.staff;
+		
+
+		dest.push(o);
+      }
+      var grpItems = groupBy(dest, "s_time");
+     
+      var timeslots = [];
+      for(var k in grpItems){
+      	 var o = {};
+      	 o.timeslot = k;
+      	 o.events = grpItems[k];
+      	 timeslots.push(o);
+      }
+      console.log("TTTTTtTTTTTT" , timeslots);
+      return timeslots;
+
+}
+function getDuration(now, then){
+	var duration = moment.duration(moment(then).diff(moment(now)));
+  	var hours = parseInt(duration.asHours());
+  	var minutes = parseInt(duration.asMinutes())-hours*60;
+
+  	var datestring = (hours>0? (hours + " hr") : "") + (minutes>0? (" "+minutes + " mins") : "");
+  	return datestring;
+
+}
+
+function groupBy(xs, key) {
+  return xs.reduce(function(rv, x) {
+    (rv[x[key]] = rv[x[key]] || []).push(x);
+    return rv;
+  }, {});
+}
+ return {
+      	getEvents(date) { 
+	      setDate(date);
+	      return $http.get(`data/${date}.json`).
+	      then(
+	      	resp => { 
+	      		var data = resp.data; return prepareTimeSlots(data.data, date);
+	      	}
+	      );
+	    }
+	}
+}
+
+const main = {
+  	template: ` 		
+  	<event-form></event-form>
+  	<div class="customer-website-main-section">
+			<div class="customer-website-right tech-task">
+				<div class="client-schedule-card-list">
+					<div class="schedule-card-parent-wrapper">
+						<div>
+						  <div ui-view></div>
+						</div>
+					</div>
+					<div class="alt-padding client-website-header-bottom-wrapper"></div>
+				</div>
+			</div>
+		</div>`,
+ 	controller: class MainController{
+	    constructor() {
+	    	console.log("init");
+	    }
+	    $onInit() {
+	     
+	    }
+	    
+	}
+};
+
+const eventForm = {
+	bindings: {
+		onSelect: '&'
+	},
+	template: `
+		<div layout-gt-xs="row">
+		    <div flex-gt-xs>
+		      <md-datepicker ng-model="$ctrl.myDate" ng-change="$ctrl.checkSchedule()" md-placeholder="Enter date" md-is-open="ctrl.isOpen"></md-datepicker>
+		      <md-button class="md-primary md-raised" ng-click="ctrl.isOpen = true">Open</md-button>
+		    </div>
+		  </div>
+	
+	`,
+	controller: class EventFormController {
+		constructor($state){
+			this.state = $state;
+			
+		}
+		$onInit(){
+			this.myDate = new Date();
+  			this.isOpen = false;
+		}
+		checkSchedule(){
+			var selected = moment(this.myDate).format('YYYY-MM-DD');
+			this.state.go('tasks.eventCard', { 'date':  selected}, {reload: 'tasks.eventCard'});
+		}
+
 	}
 };
 
@@ -280,7 +292,6 @@ const event = {
 		  	var minutes = parseInt(duration.asMinutes())-hours*60;
 
 		  	var datestring = (hours>0? (hours + " hr") : "") + (minutes>0? (" "+minutes + " mins") : "");
-		  	console.log(datestring);
 		  	return datestring;
 
 	    }
@@ -288,33 +299,7 @@ const event = {
 };
 
 
-
-function EventService() {  
-  // argument destructuring
-  function handleSuccess({data}) {
-      return data;
-  }
-
-  function handleError(response) {
-      // assignment destructuring
-      const { data, status } = response;
-      // use data or status variables
-  }
-
-  return {
-      getEvents(date) {
-          return $http
-            .get(`/api/${date}`)
-            .then(handleSuccess)
-            .catch(handleError);  
-      }
-  }
-
-}
-
-
 app.component('main', main)
-		.component('events', events)
 		.component('eventForm', eventForm)
 		.component('eventTimeSlot', eventTimeSlot)
 		.component('eventList', eventList)
@@ -322,5 +307,3 @@ app.component('main', main)
 		.component('eventCard', eventCard)
 		.service('EventService',EventService);
 
-    
-// angular.bootstrap(document.documentElement, ['app']);
